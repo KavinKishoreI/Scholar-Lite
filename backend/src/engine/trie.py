@@ -6,10 +6,8 @@ class Node :
         self.children: List[Node] = [None] * 26
         self.root = root
         self.terminal = terminal
-        
 
 class Trie:
-    
     def validate(self,s): 
         return bool(re.match(r'^[a-zA-Z]+$', s))
 
@@ -38,21 +36,41 @@ class Trie:
             current = self.root
             
         if current.terminal:
-            print(prefix)
             words.append(prefix)
 
         for i in range(26):
             if current.children[i]:
                 self.getAll(current.children[i], prefix + chr(i + 97))
            
-        if current == self.root : 
-            print(words)
+        return words 
     def searchPrefix(self, prefix = ""): 
-            pass
-                    
-        
-trie1 = Trie()
-trie1.insert("chess")
-trie1.insert("chemistry")
-
-trie1.getAll()
+            if len(prefix) < 3 or not self.validate(prefix) :
+                return []
+            else : 
+                currentNode = self.root
+                if currentNode is None : 
+                        return []
+                
+                else: 
+                    found = True 
+                    for i in range(len(prefix)): 
+                        index = ord(prefix[i]) - 97 
+                        if currentNode.children[index]: 
+                            currentNode = currentNode.children[index]
+                        else: 
+                            found = False 
+                            break
+                    if found: 
+                        return self.getAll(currentNode, prefix=prefix)
+                    else: 
+                        return []
+if __name__ == '__main__':
+    trie1 = Trie()
+    trie1.insert("chess")
+    trie1.insert("chemistry")
+    trie1.insert("champ")
+    trie1.insert('doctor')
+    trie1.insert('dosage')
+    trie1.insert('camp')
+    result = trie1.searchPrefix('ch')
+    print(result)

@@ -1,0 +1,3 @@
+url = "https://api.openalex.org/works?search=machine+learning
+    &select=id,title,cited_by_count,publication_year,doi,referenced_works
+    &mailto=kavinpersonal.id06@gmail.com"
