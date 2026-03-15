@@ -2,20 +2,24 @@ from typing import List
 import re 
 class Node : 
     def __init__(self, root: bool= False, terminal : bool = False):
-         # enforcing only one character can be used to build a trie. 
         self.children: List[Node] = [None] * 26
         self.root = root
         self.terminal = terminal
-
+        if self.terminal: 
+            self.paper_ids = set()
+        else : 
+            self.paper_ids = None
 class Trie:
     def validate(self,s): 
+        """Validate and discard entries with numbers and spaces"""
         return bool(re.match(r'^[a-zA-Z]+$', s))
 
     def __init__(self):
         self.root = None 
-    def insert(self, word : str):
+    def insert(self, word : str, paper_id : str):
+        """ Insert a word from a paper and store a paper_id"""
         if not self.validate(word): 
-            print("Inserting multi word strings are not allowed")
+            raise ValueError("Insertion of multi word strings and special characters are not allowed")
             return 
         if self.root is None: 
             self.root = Node( True, False )
@@ -25,31 +29,36 @@ class Trie:
             
             index = ord(word[i]) - 97
             
-            if currentNode.children[index] == None :
+            if currentNode.children[index] is  None :
                 currentNode.children[index] = Node(False)
             currentNode = currentNode.children[index]
         currentNode.terminal = True 
+        if currentNode.paper_ids is None: 
+            currentNode.paper_ids = set() 
+        currentNode.paper_ids.add(paper_id) 
 
-    def getAll(self, current=None, prefix="", words = []):
-
+    def getAll(self, current=None, result=None):
+        if result is None:
+            result = set()
         if current is None:
             current = self.root
-            
+
         if current.terminal:
-            words.append(prefix)
+            result.update(current.paper_ids)
 
         for i in range(26):
             if current.children[i]:
-                self.getAll(current.children[i], prefix + chr(i + 97))
-           
-        return words 
+                self.getAll(current.children[i], result)
+
+        return result
     def searchPrefix(self, prefix = ""): 
             if len(prefix) < 3 or not self.validate(prefix) :
-                return []
+                return set()
             else : 
+                prefix = prefix.lower()
                 currentNode = self.root
                 if currentNode is None : 
-                        return []
+                        return set()
                 
                 else: 
                     found = True 
@@ -61,16 +70,18 @@ class Trie:
                             found = False 
                             break
                     if found: 
-                        return self.getAll(currentNode, prefix=prefix)
+                        return self.getAll(currentNode)
                     else: 
-                        return []
+                        return set()
 if __name__ == '__main__':
     trie1 = Trie()
-    trie1.insert("chess")
-    trie1.insert("chemistry")
-    trie1.insert("champ")
-    trie1.insert('doctor')
-    trie1.insert('dosage')
-    trie1.insert('camp')
+    trie1.insert("chess", '122')
+    trie1.insert("chemistry", '134')
+    trie1.insert("champ", '122')
+    trie1.insert('doctor', '22')
+    trie1.insert('dosage', '134')
+    trie1.insert('camp', '140')
+    print("hell")
     result = trie1.searchPrefix('ch')
+    print(trie1.getAll())
     print(result)
