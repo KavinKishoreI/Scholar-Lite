@@ -38,6 +38,7 @@ class Trie:
         currentNode.paper_ids.add(paper_id) 
 
     def getAll(self, current=None, result=None):
+        """Return set of all paperids """
         if result is None:
             result = set()
         if current is None:
@@ -52,36 +53,38 @@ class Trie:
 
         return result
     def searchPrefix(self, prefix = ""): 
-            if len(prefix) < 3 or not self.validate(prefix) :
-                return set()
-            else : 
-                prefix = prefix.lower()
-                currentNode = self.root
-                if currentNode is None : 
-                        return set()
-                
-                else: 
-                    found = True 
-                    for i in range(len(prefix)): 
-                        index = ord(prefix[i]) - 97 
-                        if currentNode.children[index]: 
-                            currentNode = currentNode.children[index]
-                        else: 
-                            found = False 
-                            break
-                    if found: 
-                        return self.getAll(currentNode)
+        """Returns a set of all paperids for corresponding prefix"""
+        if len(prefix) < 2 or not self.validate(prefix) :
+            print("prefix length not sufficient")
+            return set()
+        else : 
+            prefix = prefix.lower()
+            currentNode = self.root
+            if currentNode is None : 
+                    return set()
+            
+            else: 
+                found = True 
+                for i in range(len(prefix)): 
+                    index = ord(prefix[i]) - 97 
+                    if currentNode.children[index]: 
+                        currentNode = currentNode.children[index]
                     else: 
-                        return set()
+                        found = False 
+                        break
+                if found: 
+                    return self.getAll(currentNode)
+                else: 
+                    return set()
 if __name__ == '__main__':
     trie1 = Trie()
     trie1.insert("chess", '122')
-    trie1.insert("chemistry", '134')
-    trie1.insert("champ", '122')
-    trie1.insert('doctor', '22')
+    trie1.insert('doms', '134')
+    trie1.insert('DoctoR', "200")
+    trie1.insert("CHe", '134')
+    trie1.insert("champ", '160')
+    trie1.insert('docTor', '22')
     trie1.insert('dosage', '134')
     trie1.insert('camp', '140')
-    print("hell")
-    result = trie1.searchPrefix('ch')
     print(trie1.getAll())
-    print(result)
+    print(trie1.searchPrefix("doc"))
