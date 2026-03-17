@@ -28,10 +28,9 @@ class InvertedIndex:
         #search by id return full paper documents
         return self.map.get(paper_id)
 
-    def searchByWord(self, word):
+    def searchByWord(self, tokens):
         #Recieves one word and returns set of papers. 
-        tokens = self.clean_words(word)
-        
+        print(tokens)
         if not tokens or tokens[0] in self.stopWords:
             return set()
         
@@ -44,4 +43,4 @@ if __name__ == "__main__":
         papers = json.load(f)
     
     idx = InvertedIndex(papers)
-    print(idx.searchByWord("machine"))
+    print(idx.searchByWord("learning"))
