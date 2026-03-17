@@ -13,7 +13,9 @@ class InvertedIndex:
         } 
         for i in papers:
             self.map[i['id']] = i
-            for word in self.clean_words(i.get('title', '')):
+            cleaned_words = self.clean_words(i.get('title') or  '')
+            
+            for word in cleaned_words:
                 if word in self.stopWords: 
                     continue
                 if word not in self.index:
@@ -22,6 +24,7 @@ class InvertedIndex:
       
     def clean_words(self, text):
         # Keep only alphabetic tokens and normalize to lowercase.
+       
         return re.findall(r"[a-zA-Z]+", text.lower())
 
     def searchById(self, paper_id):
@@ -30,7 +33,6 @@ class InvertedIndex:
 
     def searchByWord(self, tokens):
         #Recieves one word and returns set of papers. 
-        print(tokens)
         if not tokens or tokens[0] in self.stopWords:
             return set()
         

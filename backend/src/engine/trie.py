@@ -19,8 +19,7 @@ class Trie:
     def insert(self, word : str, paper_id : str):
         """ Insert a word from a paper and store a paper_id"""
         if not self.validate(word): 
-            raise ValueError("Insertion of multi word strings and special characters are not allowed")
-            return 
+            raise ValueError("Insertion of multi word strings and special characters are not allowed") 
         if self.root is None: 
             self.root = Node( True, False )
         currentNode = self.root 

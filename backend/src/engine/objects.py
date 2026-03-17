@@ -20,7 +20,7 @@ def initialize_objects():
 
 	for paper in papers:
 		paper_id = paper.get("id")
-		for token in re.findall(r"[a-zA-Z]+", paper.get("title", "")):
+		for token in re.findall(r"[a-zA-Z]+", paper.get("title") or ""):
 			trie.insert(token, paper_id)
 
 	return papers, inverted_index, trie

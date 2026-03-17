@@ -10,7 +10,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 OUTPUT_FILE = SCRIPT_DIR / "papers.json"
 BASE_URL = "https://api.openalex.org/works"
 BASE_PARAMS = {
-    "search": "machine learning",
+    "search": "computer science",
     "select": "id,title,cited_by_count,publication_year,doi,referenced_works",
     "mailto": "kavinpersonal.id06@gmail.com",
 }

@@ -1,5 +1,4 @@
 from inverted_index import InvertedIndex
-
 class MinHeap: 
     """ Maintains a minheap of k length """
     def __init__(self, k: int):
@@ -79,8 +78,8 @@ class MinHeap:
     def getTopK(self):
         if self.size == 0:
             print ("Elements not inserted ") 
+            return []
         else : 
             return sorted(self.minHeap[1:self.size + 1], key=lambda x: x["cited_by_count"], reverse=True)
             
-min = MinHeap(5)
-print(min.minHeap)
+
