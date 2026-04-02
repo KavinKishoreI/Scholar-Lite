@@ -12,8 +12,8 @@ class QueryRouter:
         self.papers = self.load_papers()
 
     def load_papers(self):
-        # Keep router-level access to paper metadata loaded from db/papers.json.
-        papers_path = os.path.join(os.path.dirname(__file__), "..", "db", "papers.json")
+        # Keep router-level access to paper metadata loaded from db/semantic_scholar_papers.json.
+        papers_path = os.path.join(os.path.dirname(__file__), "..", "db", "semantic_scholar_papers.json")
         try:
             with open(os.path.abspath(papers_path), "r", encoding="utf-8") as file:
                 return json.load(file)
@@ -80,11 +80,4 @@ if __name__ == "__main__":
     print(len(results))
     print("first search : ", t2- t1)
 
-    t1 = time.time()
-    query_router= QueryRouter()
     
-    results = query_router.auto_complete("machine", 100)
-    t2 = time.time()
-    
-    print(len(results))
-    print("first search : ", t2- t1)

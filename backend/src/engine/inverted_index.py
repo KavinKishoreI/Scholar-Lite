@@ -9,7 +9,7 @@ class InvertedIndex:
             "a", "an", "the", "and", "or", "but", "in", "on",
             "at", "to", "for", "of", "with", "by", "from", "is",
             "was", "are", "were", "be", "been", "being", "that",
-            "this", "it", "its", "as", "into", "through", "during"
+            "this", "it", "its", "as", "into", "through", "during", "none"
         } 
         for i in papers:
             self.map[i['id']] = i
