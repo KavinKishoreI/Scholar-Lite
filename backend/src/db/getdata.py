@@ -9,9 +9,12 @@ from requests import RequestException
 SCRIPT_DIR = Path(__file__).resolve().parent
 OUTPUT_FILE = SCRIPT_DIR / "papers.json"
 BASE_URL = "https://api.openalex.org/works"
+
 BASE_PARAMS = {
-    "search": "computer science",
-    "select": "id,title,cited_by_count,publication_year,doi,referenced_works",
+    "search": "machine learning",
+    "select": "id,title,publication_year,cited_by_count,referenced_works,abstract", 
+    "per-page": 200,
+    "cursor": "*",
     "mailto": "kavinpersonal.id06@gmail.com",
 }
 TARGET_RECORDS = 50000
@@ -86,7 +89,7 @@ def main() -> None:
     papers = fetch_records()
     save_records(papers)
     print(f"Saved {len(papers)} records to {OUTPUT_FILE}")
-
+    
 
 if __name__ == "__main__":
     main()

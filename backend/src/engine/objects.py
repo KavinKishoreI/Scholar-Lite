@@ -24,7 +24,7 @@ def initialize_objects():
 			trie.insert(token, paper_id)
 
 	return papers, inverted_index, trie
-
+	
 
 papers, invertedIndex  , prefix_tree = initialize_objects()
 

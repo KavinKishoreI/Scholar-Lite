@@ -25,17 +25,22 @@ class QueryRouter:
         return re.findall(r"[a-zA-Z]+", text.lower())
     
     def search(self, prefix ):
-    
         words = self.clean_words(prefix)
-        if words == [] : 
-            return []
-        words = prefix.split()
+        if not words:
+            return set()
+        if all(word in self.inverted_index.stopWords for word in words):
+            return set()
+
         results = self.inverted_index.searchByWord(words[0])
-        for i in range(0, len(words)-1):
+        for i in range(1, len(words)):
             search_result = self.inverted_index.searchByWord(words[i])
             results.intersection_update(search_result)
         
-        trie_results = self.trie.searchPrefix(words[-1])
+        trie_results = (
+            self.trie.searchPrefix(words[-1])
+            if words[-1] not in self.inverted_index.stopWords
+            else set()
+        )
         if len(results) == 0 :
             results.update(trie_results)
         else :
@@ -48,11 +53,16 @@ class QueryRouter:
         
     
     def auto_complete(self, prefix, k:int ): 
-        results =self.search(prefix)
+        results = self.search(prefix)
+        if not results:
+            return []
+
         min_heap = MinHeap(k)
 
         for i in results:
-            min_heap.insert(self.inverted_index.searchById(i))
+            paper = self.inverted_index.searchById(i)
+            if paper is not None:
+                min_heap.insert(paper)
         
         topk=  min_heap.getTopK()
         if topk is None: 
@@ -64,13 +74,17 @@ if __name__ == "__main__":
     t1 = time.time()
     query_router= QueryRouter()
     
-    results = query_router.auto_complete("machine learning algorithms and analysis", 5)
+    results = query_router.auto_complete("mach", 100)
     t2 = time.time()
-    print(len(results), "First search + Startup time", t2 - t1)
+    
+    print(len(results))
+    print("first search : ", t2- t1)
 
     t1 = time.time()
+    query_router= QueryRouter()
     
-    results = query_router.auto_complete("sample analysis", 5)
+    results = query_router.auto_complete("machine", 100)
     t2 = time.time()
-    print(len(results), "second search + Startup time", t2 - t1)    
     
+    print(len(results))
+    print("first search : ", t2- t1)

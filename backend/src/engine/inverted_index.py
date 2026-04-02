@@ -31,12 +31,16 @@ class InvertedIndex:
         #search by id return full paper documents
         return self.map.get(paper_id)
 
-    def searchByWord(self, tokens):
-        #Recieves one word and returns set of papers. 
-        if not tokens or tokens[0] in self.stopWords:
+    def searchByWord(self, token):
+        # Receives one normalized word and returns a copy of matching paper ids.
+        if not token or not isinstance(token, str):
             return set()
-        
-        return self.index.get(tokens[0], set())
+
+        token = token.lower()
+        if token in self.stopWords:
+            return set()
+
+        return set(self.index.get(token, set()))
 
 
 if __name__ == "__main__":

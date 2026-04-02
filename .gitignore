@@ -4,3 +4,4 @@ __pycache__
 papers.json
 semantic_scholar_papers.json
 semantic_scholar_state.json
+.txt
