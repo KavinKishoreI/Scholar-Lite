@@ -1,4 +1,6 @@
-papers.json
 .env
 */venv
 __pycache__
+papers.json
+semantic_scholar_papers.json
+semantic_scholar_state.json
