@@ -1,13 +1,16 @@
-from inverted_index import InvertedIndex
 class MinHeap: 
     """ Maintains a minheap of k length """
-    def __init__(self, k: int):
+    def __init__(self, k: int, key_fn=None):
         self.minHeap = [None] 
         self.max_size = k 
         self.size = 0 
+        self.key_fn = key_fn
 
     def _key(self, element):
-        # Rank by recency (publication year); missing years fall to the bottom.
+        if self.key_fn is not None:
+            return self.key_fn(element)
+
+        # Default ranking by recency (publication year); missing years fall to the bottom.
         val = element.get("year", 0)
         try:
             return int(val)
@@ -37,7 +40,7 @@ class MinHeap:
             return min_element
 
     def insert(self, element):
-        """Insert while keeping only top-k largest cited_by_count elements."""
+        """Insert while keeping only the top-k largest elements by the configured key."""
         if self.max_size <= 0:
             return
 
@@ -88,5 +91,5 @@ class MinHeap:
             print ("Elements not inserted ") 
             return []
         else : 
-            return sorted(self.minHeap[1:self.size + 1], key=lambda x: x.get("year", 0), reverse=True)
+            return sorted(self.minHeap[1:self.size + 1], key=self._key, reverse=True)
             
