@@ -1,10 +1,21 @@
-from inverted_index import InvertedIndex
 class MinHeap: 
     """ Maintains a minheap of k length """
-    def __init__(self, k: int):
+    def __init__(self, k: int, key_fn=None):
         self.minHeap = [None] 
         self.max_size = k 
         self.size = 0 
+        self.key_fn = key_fn
+
+    def _key(self, element):
+        if self.key_fn is not None:
+            return self.key_fn(element)
+
+        # Default ranking by recency (publication year); missing years fall to the bottom.
+        val = element.get("year", 0)
+        try:
+            return int(val)
+        except (TypeError, ValueError):
+            return 0
     def extract_min(self) : 
         if self.size == 0 : 
             return 
@@ -17,9 +28,9 @@ class MinHeap:
             i = 1
             while 2*i <= self.size: 
                 minimum = i 
-                if 2*i <= self.size and self.minHeap[2* i]["cited_by_count"] < self.minHeap[minimum]["cited_by_count"] :
+                if 2*i <= self.size and self._key(self.minHeap[2* i]) < self._key(self.minHeap[minimum]) :
                     minimum = 2 * i
-                if 2*i +1 <= self.size and  self.minHeap[2 * i+ 1 ]['cited_by_count'] < self.minHeap[minimum]['cited_by_count'] :
+                if 2*i +1 <= self.size and  self._key(self.minHeap[2 * i+ 1 ]) < self._key(self.minHeap[minimum]) :
                     minimum  = 2 * i + 1 
                 if i == minimum : 
                     break 
@@ -29,7 +40,7 @@ class MinHeap:
             return min_element
 
     def insert(self, element):
-        """Insert while keeping only top-k largest cited_by_count elements."""
+        """Insert while keeping only the top-k largest elements by the configured key."""
         if self.max_size <= 0:
             return
 
@@ -40,7 +51,7 @@ class MinHeap:
             i = self.size
             while i > 1:
                 parent = i // 2
-                if self.minHeap[i]["cited_by_count"] < self.minHeap[parent]["cited_by_count"]:
+                if self._key(self.minHeap[i]) < self._key(self.minHeap[parent]):
                     self.minHeap[i], self.minHeap[parent] = self.minHeap[parent], self.minHeap[i]
                     i = parent
                 else:
@@ -48,7 +59,7 @@ class MinHeap:
             return
 
         # Heap is full: only keep the new element if it is larger than current minimum.
-        if element["cited_by_count"] <= self.minHeap[1]["cited_by_count"]:
+        if self._key(element) <= self._key(self.minHeap[1]):
             return
 
         self.minHeap[1] = element
@@ -60,13 +71,13 @@ class MinHeap:
 
             if (
                 left <= self.size
-                and self.minHeap[left]["cited_by_count"] < self.minHeap[minimum]["cited_by_count"]
+                and self._key(self.minHeap[left]) < self._key(self.minHeap[minimum])
             ):
                 minimum = left
 
             if (
                 right <= self.size
-                and self.minHeap[right]["cited_by_count"] < self.minHeap[minimum]["cited_by_count"]
+                and self._key(self.minHeap[right]) < self._key(self.minHeap[minimum])
             ):
                 minimum = right
 
@@ -80,6 +91,5 @@ class MinHeap:
             print ("Elements not inserted ") 
             return []
         else : 
-            return sorted(self.minHeap[1:self.size + 1], key=lambda x: x["cited_by_count"], reverse=True)
+            return sorted(self.minHeap[1:self.size + 1], key=self._key, reverse=True)
             
-
