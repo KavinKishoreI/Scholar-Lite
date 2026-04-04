@@ -5,3 +5,4 @@ papers.json
 semantic_scholar_papers.json
 semantic_scholar_state.json
 .txt
+backend/src/engine/artifacts/
