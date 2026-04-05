@@ -6,3 +6,6 @@ semantic_scholar_papers.json
 semantic_scholar_state.json
 .txt
 backend/src/engine/artifacts/
+backend/src/db/benchmark/*.db
+frontend/node_modules/
+frontend/dist/
