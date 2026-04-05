@@ -2,103 +2,66 @@
 
 PowerSearch is a local full-stack research paper search system built around a custom in-memory search engine.
 
-It combines:
-- a React frontend for live search and autocomplete
-- a FastAPI backend for search APIs
-- a custom engine using an inverted index, trie-based prefix search, pagination, and LRU caching
-- a `50,000`-paper Semantic Scholar dataset focused on computer science and adjacent technical topics
+It combines a React frontend, a FastAPI backend, and a custom search layer using an inverted index, trie-based autocomplete, pagination, and LRU caching over a `50,000`-paper Semantic Scholar corpus. The project is designed to be both practical and explainable: fast enough to feel responsive in use, while still grounded in core software engineering and data-structure concepts.
 
-The goal of the project is simple: build a search system that feels responsive in practice, is explainable from a data-structures point of view, and can be benchmarked against SQL-based baselines.
+## What It Does
 
-## Highlights
+- searches a large paper corpus with paginated results
+- supports low-latency autocomplete while typing
+- serves the system through a backend API
+- exposes a browser-based frontend for end-to-end local usage
+- logs both backend and frontend request timings for inspection
+- benchmarks the custom engine against SQLite baselines
 
-- Built over `50,000` Semantic Scholar records
-- Custom in-memory search engine using:
-  - inverted index
-  - trie for autocomplete
-  - LRU caching for search and autocomplete
-- FastAPI backend with:
-  - `POST /search`
-  - `GET /autocomplete`
-  - `GET /health`
-- React frontend with:
-  - live autocomplete
-  - paginated search results
-  - client-side latency logging
-- Serialized engine objects for faster startup
-- SQLite benchmark suite comparing:
-  - naive `LIKE`
-  - indexed `FTS5`
-  - custom engine
+## System Overview
 
-## Architecture
+### Search Engine
 
-### Backend
+The search engine is built in memory and uses:
 
-The backend lives in `backend/src`.
+- an inverted index for token-to-document lookup
+- a trie for prefix-based autocomplete
+- LRU caches for repeated search and autocomplete requests
+- pagination for full search results
 
-- [main.py](/home/kavin/projects/PowerSearch/backend/src/main.py)
-  - FastAPI application
-  - logs request timings for search and autocomplete
-- [query_router.py](/home/kavin/projects/PowerSearch/backend/src/engine/query_router.py)
-  - routes queries through the engine
-  - handles strict AND search, pagination, autocomplete, and cache lookups
-- [inverted_index.py](/home/kavin/projects/PowerSearch/backend/src/engine/inverted_index.py)
-  - token-to-document lookup
-- [trie.py](/home/kavin/projects/PowerSearch/backend/src/engine/trie.py)
-  - prefix-based autocomplete
-- [lru.py](/home/kavin/projects/PowerSearch/backend/src/engine/lru.py)
-  - manual LRU cache implementation using a hashmap and doubly linked list
-- [objects.py](/home/kavin/projects/PowerSearch/backend/src/engine/objects.py)
-  - loads serialized engine artifacts when available
-  - otherwise builds the engine from the Semantic Scholar dataset and saves the artifact
+To reduce startup cost, the expensive search structures are serialized and loaded from disk when available. Runtime caches are not serialized; they start empty and warm naturally during use.
+
+### Backend API
+
+The backend is built with FastAPI and exposes:
+
+- `GET /health`
+- `POST /search`
+- `GET /autocomplete`
+
+The backend also logs request timings, which makes it easy to observe cache hits and compare API latency with browser-observed latency.
 
 ### Frontend
 
-The frontend lives in `frontend/`.
+The frontend is built with React and provides:
 
-- [App.jsx](/home/kavin/projects/PowerSearch/frontend/src/App.jsx)
-  - search UI
-  - autocomplete UI
-  - paginated result rendering
-  - browser-side latency logging
-- [styles.css](/home/kavin/projects/PowerSearch/frontend/src/styles.css)
-  - visual styling
+- a search input
+- live autocomplete suggestions
+- paginated results
+- browser console timing logs for autocomplete and search requests
+
+Together, the frontend and backend make the project a true local end-to-end full-stack application rather than only a backend engine.
 
 ## Dataset
 
-The engine currently runs on the Semantic Scholar dataset stored in:
-
-- [semantic_scholar_papers.json](/home/kavin/projects/PowerSearch/backend/src/db/semantic_scholar_papers.json)
-
-The dataset currently contains:
-- `50,000` records
-- paper identifiers
-- titles
-- years
-- abstracts
-- paper URLs
-- citation counts
+The current system runs on a Semantic Scholar dataset containing `50,000` records. Each record includes metadata such as title, abstract, year, citation information, and paper URL.
 
 The engine indexes title and abstract text for search, and title tokens for trie-based autocomplete.
 
-## API
+## API Usage
 
-### `GET /health`
-
-Simple health check.
-
-Example:
+### Health Check
 
 ```bash
 curl http://127.0.0.1:8000/health
 ```
 
-### `POST /search`
-
-Paginated search endpoint.
-
-Example:
+### Search
 
 ```bash
 curl -X POST http://127.0.0.1:8000/search \
@@ -110,11 +73,7 @@ curl -X POST http://127.0.0.1:8000/search \
   }'
 ```
 
-### `GET /autocomplete`
-
-Autocomplete endpoint.
-
-Example:
+### Autocomplete
 
 ```bash
 curl "http://127.0.0.1:8000/autocomplete?q=deep%20learning&k=5"
@@ -122,12 +81,8 @@ curl "http://127.0.0.1:8000/autocomplete?q=deep%20learning&k=5"
 
 ## Benchmarks
 
-This project includes a reproducible SQLite benchmark under:
+The project includes a reproducible SQLite benchmark comparing the custom engine against:
 
-- [benchmark/README.md](/home/kavin/projects/PowerSearch/backend/src/db/benchmark/README.md)
-- [sqlite_benchmark.py](/home/kavin/projects/PowerSearch/backend/src/db/benchmark/sqlite_benchmark.py)
-
-It compares the custom engine against:
 - naive SQLite `LIKE` search
 - indexed SQLite `FTS5`
 
@@ -152,17 +107,20 @@ Latest local benchmark results:
 - custom engine: `0.002075s`
 
 Important note:
-- the SQLite benchmark is a local baseline, not a universal claim against all SQL servers
+
+- this is a local SQLite baseline, not a universal comparison against all SQL systems
 - `LIKE` is intentionally the naive baseline
-- `FTS5` is the fairer full-text SQL comparison
+- `FTS5` is the more meaningful full-text SQL comparison
 
 ## Local Performance Notes
 
 In local testing:
+
 - repeated backend cached requests dropped to near-microsecond processing times in server logs
 - browser-observed repeated requests were generally in the `5–10 ms` range
 
 That difference is expected because browser timings include:
+
 - request/response overhead
 - JSON parsing
 - frontend runtime overhead
@@ -171,20 +129,20 @@ That difference is expected because browser timings include:
 
 ### Backend
 
-Create and activate your virtual environment if needed, then install backend dependencies:
+Install dependencies:
 
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-Run the API:
+Start the backend:
 
 ```bash
 backend/venv/bin/uvicorn main:app --app-dir backend/src --reload
 ```
 
-Backend runs at:
+The backend runs at:
 
 ```text
 http://127.0.0.1:8000
@@ -192,20 +150,20 @@ http://127.0.0.1:8000
 
 ### Frontend
 
-Install frontend dependencies:
+Install dependencies:
 
 ```bash
 cd frontend
 npm install
 ```
 
-Start the React dev server:
+Start the frontend:
 
 ```bash
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
-Frontend runs at:
+The frontend runs at:
 
 ```text
 http://127.0.0.1:5173
@@ -219,55 +177,37 @@ To rebuild and rerun the SQLite benchmark:
 backend/venv/bin/python backend/src/db/benchmark/sqlite_benchmark.py
 ```
 
-This generates:
-
-- [semantic_scholar_benchmark.db](/home/kavin/projects/PowerSearch/backend/src/db/benchmark/semantic_scholar_benchmark.db)
-
-That `.db` file is ignored by Git.
-
-## Notes On Serialization
-
-The engine serializes the expensive core search objects:
-- normalized papers
-- inverted index
-- trie
-
-These are stored under:
-
-- [artifacts](/home/kavin/projects/PowerSearch/backend/src/engine/artifacts)
-
-Runtime caches are not serialized:
-- `search_cache`
-- `autocomplete_cache`
-
-They start empty on boot and warm naturally during usage.
+The generated SQLite benchmark database is kept local and ignored by Git.
 
 ## Current Scope
 
-What is already implemented:
+Implemented:
+
 - local full-stack search flow
 - backend API
 - frontend integration
 - autocomplete
 - paginated search
 - in-memory engine
-- caching
+- serialization for startup optimization
+- LRU caching
 - SQLite benchmark proof
 
-What is still open for future improvement:
+Future improvements:
+
 - cleaner package-style imports in the engine
-- deployment hardening
-- improved ranking beyond recency-first
-- more advanced filtering
-- production-grade startup optimization and artifact management
+- stronger deployment hardening
+- richer ranking beyond recency-first ordering
+- more advanced filtering and query controls
 
 ## Why This Project Is Interesting
 
-PowerSearch is useful because it sits at the intersection of:
+PowerSearch sits at the intersection of:
+
 - data structures
-- backend systems
+- backend engineering
 - API design
-- local benchmarking
+- benchmarking
 - frontend integration
 
-It is not just a crawler or just a UI. It is a measurable, explainable search system with a real full-stack workflow.
+It is not just a crawler, not just a UI, and not just a backend service. It is a measurable, explainable full-stack search system built around core software engineering ideas.
