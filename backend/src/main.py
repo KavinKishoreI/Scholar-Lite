@@ -7,6 +7,7 @@ import time
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 
@@ -22,6 +23,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("powersearch.api")
 
 app = FastAPI(title="PowerSearch API", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 query_router = QueryRouter()
 
 
