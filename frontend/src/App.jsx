@@ -1,17 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 
 const API_BASE = "http://127.0.0.1:8000";
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
+
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="search-icon-svg">
+      <path
+        d="M10.5 4a6.5 6.5 0 1 0 4.03 11.6l4.43 4.43 1.06-1.06-4.43-4.43A6.5 6.5 0 0 0 10.5 4Zm0 1.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
 
 function formatYear(year) {
   return year ?? "Year unknown";
 }
 
 export default function App() {
+  const ABSTRACT_PREVIEW_LENGTH = 260;
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [results, setResults] = useState([]);
+  const [expandedAbstracts, setExpandedAbstracts] = useState({});
   const [offset, setOffset] = useState(0);
   const [total, setTotal] = useState(0);
   const [loadingSearch, setLoadingSearch] = useState(false);
@@ -102,6 +115,7 @@ export default function App() {
       setDraft(nextQuery);
       setOffset(nextOffset);
       setResults(payload.results ?? []);
+      setExpandedAbstracts({});
       setTotal(payload.total ?? 0);
       setSuggestions([]);
     } catch (fetchError) {
@@ -132,25 +146,40 @@ export default function App() {
     return offset + PAGE_SIZE < total;
   }
 
+  const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pageNumbers = [];
+  const pageWindowStart = Math.max(1, currentPage - 2);
+  const pageWindowEnd = Math.min(totalPages, pageWindowStart + 4);
+
+  for (let page = pageWindowStart; page <= pageWindowEnd; page += 1) {
+    pageNumbers.push(page);
+  }
+
+  function toggleAbstract(paperId) {
+    setExpandedAbstracts((current) => ({
+      ...current,
+      [paperId]: !current[paperId],
+    }));
+  }
+
   return (
     <div className="page-shell">
       <div className="backdrop-grid" />
       <main className="app-card">
         <section className="hero">
-          <p className="eyebrow">PowerSearch</p>
-          <h1>Research search built on custom indexing, autocomplete, and caching.</h1>
+          <p className="eyebrow">Scholar-lite</p>
+          <h1>Search scholarly papers with a fast, focused interface.</h1>
           <p className="subcopy">
-            Explore a 50K paper corpus with trie-based autocomplete and paginated search
-            powered by your in-memory engine.
+            Explore a 50K paper corpus with trie-based autocomplete and paginated
+            search powered by a custom in-memory engine.
           </p>
         </section>
 
         <section className="search-panel">
           <form className="search-form" onSubmit={handleSubmit}>
-            <label className="search-label" htmlFor="query-input">
-              Search papers
-            </label>
-            <div className="search-row">
+            <div className="search-shell">
+              <SearchIcon />
               <input
                 id="query-input"
                 className="search-input"
@@ -158,18 +187,15 @@ export default function App() {
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder="Try deep learning, graph neural, machine learning..."
               />
-              <button className="search-button" type="submit" disabled={loadingSearch}>
-                {loadingSearch ? "Searching..." : "Search"}
+              <button className="search-icon-button" type="submit" disabled={loadingSearch}>
+                <SearchIcon />
               </button>
             </div>
           </form>
 
           {(loadingAuto || suggestions.length > 0) && (
             <div className="suggestion-box">
-              <div className="suggestion-header">
-                <span>Autocomplete</span>
-                {loadingAuto && <span className="muted">Loading...</span>}
-              </div>
+              {loadingAuto && <div className="suggestion-loading">Loading...</div>}
               {suggestions.map((paper) => (
                 <button
                   key={paper.id}
@@ -185,72 +211,124 @@ export default function App() {
           )}
         </section>
 
-        <section className="results-panel">
-          <div className="results-topbar">
-            <div>
-              <p className="results-label">Results</p>
-              <h2>{query ? `Showing matches for "${query}"` : "Run a search to begin"}</h2>
-            </div>
-            {query && (
-              <div className="results-meta">
-                <span>{total.toLocaleString()} total</span>
-                <span>Page size {PAGE_SIZE}</span>
+        {(query || loadingSearch || error) && (
+          <section className="results-panel">
+            <div className="results-topbar">
+              <div>
+                <p className="results-label">Results</p>
+                <h2>{query ? `Showing matches for "${query}"` : "Searching..."}</h2>
               </div>
-            )}
-          </div>
-
-          {error && <p className="error-banner">{error}</p>}
-
-          <div className="results-list">
-            {results.map((paper) => (
-              <article key={paper.id} className="paper-card">
-                <div className="paper-header">
-                  <h3>{paper.title}</h3>
-                  <span className="paper-year">{formatYear(paper.year)}</span>
+              {query && (
+                <div className="results-meta">
+                  <span>{total.toLocaleString()} total</span>
+                  <span>Page size {PAGE_SIZE}</span>
                 </div>
-                <p className="paper-abstract">
-                  {paper.abstract?.trim()
-                    ? paper.abstract
-                    : "No abstract available for this paper in the current dataset."}
-                </p>
-                <div className="paper-footer">
-                  <span>Citations: {paper.cited_by_count ?? 0}</span>
-                  {paper.paper_url && (
-                    <a href={paper.paper_url} target="_blank" rel="noreferrer">
-                      Open paper
-                    </a>
-                  )}
-                </div>
-              </article>
-            ))}
+              )}
+            </div>
 
-            {!loadingSearch && query && results.length === 0 && !error && (
-              <div className="empty-state">No results found for this query.</div>
-            )}
-          </div>
+            {error && <p className="error-banner">{error}</p>}
 
-          <div className="pagination-row">
-            <button
-              className="pager-button secondary"
-              type="button"
-              onClick={() => runSearch(query, Math.max(0, offset - PAGE_SIZE))}
-              disabled={!query || !canGoPrev() || loadingSearch}
-            >
-              Previous
-            </button>
-            <span className="page-indicator">
-              {query ? `${offset + 1}-${Math.min(offset + PAGE_SIZE, total)} of ${total}` : "No page"}
-            </span>
-            <button
-              className="pager-button"
-              type="button"
-              onClick={() => runSearch(query, offset + PAGE_SIZE)}
-              disabled={!query || !canGoNext() || loadingSearch}
-            >
-              Next
-            </button>
-          </div>
-        </section>
+            <div className="results-list">
+              {results.map((paper) => (
+                <article
+                  key={paper.id}
+                  className={`paper-card${paper.paper_url ? " clickable" : ""}`}
+                  onClick={() => {
+                    if (paper.paper_url) {
+                      window.open(paper.paper_url, "_blank", "noreferrer");
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (paper.paper_url && (event.key === "Enter" || event.key === " ")) {
+                      event.preventDefault();
+                      window.open(paper.paper_url, "_blank", "noreferrer");
+                    }
+                  }}
+                  role={paper.paper_url ? "link" : undefined}
+                  tabIndex={paper.paper_url ? 0 : undefined}
+                >
+                  {(() => {
+                    const abstractText = paper.abstract?.trim()
+                      ? paper.abstract
+                      : "No abstract available for this paper in the current dataset.";
+                    const isExpandable = abstractText.length > ABSTRACT_PREVIEW_LENGTH;
+                    const isExpanded = Boolean(expandedAbstracts[paper.id]);
+                    const visibleAbstract =
+                      isExpandable && !isExpanded
+                        ? `${abstractText.slice(0, ABSTRACT_PREVIEW_LENGTH).trim()}...`
+                        : abstractText;
+
+                    return (
+                      <>
+                        <div className="paper-header">
+                          <h3>{paper.title}</h3>
+                          <span className="paper-year">{formatYear(paper.year)}</span>
+                        </div>
+                        <p className="paper-abstract">{visibleAbstract}</p>
+                        {isExpandable && (
+                          <button
+                            type="button"
+                            className="abstract-toggle"
+                            onClick={() => toggleAbstract(paper.id)}
+                          >
+                            {isExpanded ? "Show less" : "Show more"}
+                          </button>
+                        )}
+                        <div className="paper-footer">
+                          <span>Citations: {paper.cited_by_count ?? 0}</span>
+                          <span className="paper-link-hint">
+                            {paper.paper_url ? "Click card to open paper" : "Paper link unavailable"}
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </article>
+              ))}
+
+              {!loadingSearch && query && results.length === 0 && !error && (
+                <div className="empty-state">No results found for this query.</div>
+              )}
+            </div>
+
+            <div className="pagination-row">
+              <button
+                className="pager-button secondary"
+                type="button"
+                onClick={() => runSearch(query, Math.max(0, offset - PAGE_SIZE))}
+                disabled={!query || !canGoPrev() || loadingSearch}
+              >
+                Previous
+              </button>
+              <div className="page-number-row">
+                {pageNumbers.map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    className={`page-number-button${pageNumber === currentPage ? " active" : ""}`}
+                    type="button"
+                    onClick={() => runSearch(query, (pageNumber - 1) * PAGE_SIZE)}
+                    disabled={!query || loadingSearch}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
+              </div>
+              <button
+                className="pager-button"
+                type="button"
+                onClick={() => runSearch(query, offset + PAGE_SIZE)}
+                disabled={!query || !canGoNext() || loadingSearch}
+              >
+                Next
+              </button>
+            </div>
+            <div className="pagination-meta">
+              <span className="page-indicator">
+                {query ? `${offset + 1}-${Math.min(offset + PAGE_SIZE, total)} of ${total}` : "No page"}
+              </span>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
